@@ -10,8 +10,13 @@ interface DateResponse {
   time_zone: string | null;
 }
 
-const notion = new Client({
+export const notion = new Client({
   auth: process.env.NOTION_TOKEN,
+  fetch: (url, init) =>
+    fetch(url, {
+      ...init,
+      next: { revalidate: 60 },
+    }),
 });
 
 export interface CalendarItem {
@@ -19,6 +24,34 @@ export interface CalendarItem {
   date: string;
   title: string;
   description?: string;
+}
+
+// 페이지네이션 헬퍼 함수
+async function queryDatabaseWithPagination(
+  databaseId: string,
+  sorts?: Array<{ property: string; direction: "ascending" | "descending" }>
+): Promise<PageObjectResponse[]> {
+  let allResults: PageObjectResponse[] = [];
+  let hasMore = true;
+  let startCursor: string | undefined = undefined;
+
+  while (hasMore) {
+    const response = await notion.databases.query({
+      database_id: databaseId,
+      sorts,
+      start_cursor: startCursor,
+    });
+
+    const pages = response.results.filter(
+      (page): page is PageObjectResponse => "properties" in page
+    );
+    allResults = [...allResults, ...pages];
+
+    hasMore = response.has_more;
+    startCursor = response.next_cursor ?? undefined;
+  }
+
+  return allResults;
 }
 
 function getPlainText(richText: RichTextItemResponse[]): string {
@@ -51,38 +84,35 @@ export async function getCalendarData(): Promise<CalendarItem[]> {
       return [];
     }
 
-    const response = await notion.databases.query({
-      database_id: databaseId,
-      sorts: [{ property: "날짜", direction: "ascending" }],
+    const pages = await queryDatabaseWithPagination(databaseId, [
+      { property: "날짜", direction: "descending" },
+    ]);
+
+    return pages.map((page) => {
+      const properties = page.properties;
+
+      const date =
+        properties["날짜"]?.type === "date"
+          ? formatDate(properties["날짜"].date)
+          : "";
+
+      const title =
+        properties["제목"]?.type === "title"
+          ? getPlainText(properties["제목"].title)
+          : "";
+
+      const description =
+        properties["소제목"]?.type === "rich_text"
+          ? getPlainText(properties["소제목"].rich_text)
+          : undefined;
+
+      return {
+        id: page.id,
+        date,
+        title,
+        description: description || undefined,
+      };
     });
-
-    return response.results
-      .filter((page): page is PageObjectResponse => "properties" in page)
-      .map((page) => {
-        const properties = page.properties;
-
-        const date =
-          properties["날짜"]?.type === "date"
-            ? formatDate(properties["날짜"].date)
-            : "";
-
-        const title =
-          properties["제목"]?.type === "title"
-            ? getPlainText(properties["제목"].title)
-            : "";
-
-        const description =
-          properties["소제목"]?.type === "rich_text"
-            ? getPlainText(properties["소제목"].rich_text)
-            : undefined;
-
-        return {
-          id: page.id,
-          date,
-          title,
-          description: description || undefined,
-        };
-      });
   } catch (error) {
     console.error("Failed to fetch calendar data:", error);
     return [];
@@ -141,48 +171,45 @@ export async function getNoticeData(): Promise<NoticeItem[]> {
       return [];
     }
 
-    const response = await notion.databases.query({
-      database_id: databaseId,
-      sorts: [{ property: "날짜", direction: "descending" }],
+    const pages = await queryDatabaseWithPagination(databaseId, [
+      { property: "날짜", direction: "ascending" },
+    ]);
+
+    return pages.map((page) => {
+      const properties = page.properties;
+
+      const title =
+        properties["타이틀"]?.type === "title"
+          ? getPlainText(properties["타이틀"].title)
+          : "";
+
+      const date =
+        properties["날짜"]?.type === "date"
+          ? formatDate(properties["날짜"].date)
+          : "";
+
+      const category =
+        properties["태그"]?.type === "rich_text"
+          ? getPlainText(properties["태그"].rich_text)
+          : "";
+
+      const image =
+        properties["파일과 미디어"]?.type === "files"
+          ? getFileUrl(properties["파일과 미디어"].files as Array<{
+              type: string;
+              file?: { url: string };
+              external?: { url: string };
+            }>)
+          : "/main01.jpg";
+
+      return {
+        id: page.id,
+        title,
+        date,
+        category,
+        image,
+      };
     });
-
-    return response.results
-      .filter((page): page is PageObjectResponse => "properties" in page)
-      .map((page) => {
-        const properties = page.properties;
-
-        const title =
-          properties["타이틀"]?.type === "title"
-            ? getPlainText(properties["타이틀"].title)
-            : "";
-
-        const date =
-          properties["날짜"]?.type === "date"
-            ? formatDate(properties["날짜"].date)
-            : "";
-
-        const category =
-          properties["태그"]?.type === "rich_text"
-            ? getPlainText(properties["태그"].rich_text)
-            : "";
-
-        const image =
-          properties["파일과 미디어"]?.type === "files"
-            ? getFileUrl(properties["파일과 미디어"].files as Array<{
-                type: string;
-                file?: { url: string };
-                external?: { url: string };
-              }>)
-            : "/main01.jpg";
-
-        return {
-          id: page.id,
-          title,
-          date,
-          category,
-          image,
-        };
-      });
   } catch (error) {
     console.error("Failed to fetch notice data:", error);
     return [];
@@ -268,11 +295,9 @@ export async function getAllNoticeIds(): Promise<string[]> {
     throw new Error("NOTION_NOTICE_DATABASE_ID is not set");
   }
 
-  const response = await notion.databases.query({
-    database_id: databaseId,
-  });
+  const pages = await queryDatabaseWithPagination(databaseId);
 
-  return response.results.map((page) => page.id);
+  return pages.map((page) => page.id);
 }
 
 // YouTube 관련
@@ -292,38 +317,35 @@ export async function getYoutubeData(): Promise<YoutubeItem[]> {
       return [];
     }
 
-    const response = await notion.databases.query({
-      database_id: databaseId,
-      sorts: [{ property: "날짜", direction: "descending" }],
+    const pages = await queryDatabaseWithPagination(databaseId, [
+      { property: "날짜", direction: "ascending" },
+    ]);
+
+    return pages.map((page) => {
+      const properties = page.properties;
+
+      const title =
+        properties["제목"]?.type === "title"
+          ? getPlainText(properties["제목"].title)
+          : "";
+
+      const date =
+        properties["날짜"]?.type === "date"
+          ? formatDate(properties["날짜"].date)
+          : "";
+
+      const videoId =
+        properties["유튜브 동영상 고유 id"]?.type === "rich_text"
+          ? getPlainText(properties["유튜브 동영상 고유 id"].rich_text)
+          : "";
+
+      return {
+        id: page.id,
+        videoId,
+        title,
+        date,
+      };
     });
-
-    return response.results
-      .filter((page): page is PageObjectResponse => "properties" in page)
-      .map((page) => {
-        const properties = page.properties;
-
-        const title =
-          properties["제목"]?.type === "title"
-            ? getPlainText(properties["제목"].title)
-            : "";
-
-        const date =
-          properties["날짜"]?.type === "date"
-            ? formatDate(properties["날짜"].date)
-            : "";
-
-        const videoId =
-          properties["유튜브 동영상 고유 id"]?.type === "rich_text"
-            ? getPlainText(properties["유튜브 동영상 고유 id"].rich_text)
-            : "";
-
-        return {
-          id: page.id,
-          videoId,
-          title,
-          date,
-        };
-      });
   } catch (error) {
     console.error("Failed to fetch youtube data:", error);
     return [];
@@ -346,36 +368,32 @@ export async function getFaqData(): Promise<FaqItem[]> {
       return [];
     }
 
-    const response = await notion.databases.query({
-      database_id: databaseId,
+    const pages = await queryDatabaseWithPagination(databaseId);
+
+    return pages.map((page) => {
+      const properties = page.properties;
+
+      const id =
+        properties["아이디(아무거나 쓰세요)"]?.type === "title"
+          ? getPlainText(properties["아이디(아무거나 쓰세요)"].title)
+          : page.id;
+
+      const title =
+        properties["제목"]?.type === "rich_text"
+          ? getPlainText(properties["제목"].rich_text)
+          : "";
+
+      const content =
+        properties["내용"]?.type === "rich_text"
+          ? getPlainText(properties["내용"].rich_text)
+          : "";
+
+      return {
+        id,
+        title,
+        content,
+      };
     });
-
-    return response.results
-      .filter((page): page is PageObjectResponse => "properties" in page)
-      .map((page) => {
-        const properties = page.properties;
-
-        const id =
-          properties["아이디(아무거나 쓰세요)"]?.type === "title"
-            ? getPlainText(properties["아이디(아무거나 쓰세요)"].title)
-            : page.id;
-
-        const title =
-          properties["제목"]?.type === "rich_text"
-            ? getPlainText(properties["제목"].rich_text)
-            : "";
-
-        const content =
-          properties["내용"]?.type === "rich_text"
-            ? getPlainText(properties["내용"].rich_text)
-            : "";
-
-        return {
-          id,
-          title,
-          content,
-        };
-      });
   } catch (error) {
     console.error("Failed to fetch faq data:", error);
     return [];
@@ -399,43 +417,39 @@ export async function getSiteData(): Promise<SiteItem[]> {
       return [];
     }
 
-    const response = await notion.databases.query({
-      database_id: databaseId,
+    const pages = await queryDatabaseWithPagination(databaseId);
+
+    return pages.map((page) => {
+      const properties = page.properties;
+
+      const title =
+        properties["사이트명"]?.type === "title"
+          ? getPlainText(properties["사이트명"].title)
+          : "";
+
+      const href =
+        properties["URL"]?.type === "url"
+          ? properties["URL"].url || "/"
+          : "/";
+
+      const imageSrc =
+        properties["파일과 미디어"]?.type === "files"
+          ? getFileUrl(
+              properties["파일과 미디어"].files as Array<{
+                type: string;
+                file?: { url: string };
+                external?: { url: string };
+              }>
+            )
+          : "/main04.png";
+
+      return {
+        id: page.id,
+        title,
+        href,
+        imageSrc,
+      };
     });
-
-    return response.results
-      .filter((page): page is PageObjectResponse => "properties" in page)
-      .map((page) => {
-        const properties = page.properties;
-
-        const title =
-          properties["사이트명"]?.type === "title"
-            ? getPlainText(properties["사이트명"].title)
-            : "";
-
-        const href =
-          properties["URL"]?.type === "url"
-            ? properties["URL"].url || "/"
-            : "/";
-
-        const imageSrc =
-          properties["파일과 미디어"]?.type === "files"
-            ? getFileUrl(
-                properties["파일과 미디어"].files as Array<{
-                  type: string;
-                  file?: { url: string };
-                  external?: { url: string };
-                }>
-              )
-            : "/main04.png";
-
-        return {
-          id: page.id,
-          title,
-          href,
-          imageSrc,
-        };
-      });
   } catch (error) {
     console.error("Failed to fetch site data:", error);
     return [];

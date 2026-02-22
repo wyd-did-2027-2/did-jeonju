@@ -18,8 +18,7 @@ import {
   getSiteData,
 } from "@/lib/notion";
 
-// 캐시 비활성화 - Notion 수정 시 바로 반영
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function Home() {
   const [calendarItems, noticeItems, youtubeItems, faqItems, siteItems] =
@@ -36,10 +35,10 @@ export default async function Home() {
       <Header />
       <main className="pt-20">
         <SliderSection />
-        <CalendarSection items={[...calendarItems].reverse()} />
-        <NoticeSection items={[...noticeItems].reverse()} />
-        <YoutubeSection items={[...youtubeItems].reverse()} />
-        <SiteSection items={[...siteItems].reverse()} />
+        <CalendarSection items={calendarItems} />
+        <NoticeSection items={noticeItems} />
+        <YoutubeSection items={youtubeItems} />
+        <SiteSection items={siteItems} />
         <FaqSection items={faqItems} />
       </main>
       <Footer />
