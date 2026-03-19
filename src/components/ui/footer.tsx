@@ -29,8 +29,8 @@ export default function Footer({ locale = "kr" }: { locale?: Locale }) {
         </address>
       </div>
       <div>
-        <h3 className="heading03B max-[1079px]:mb-1">{t.phone}</h3>
-        <p className="body02R">{t.hours}</p>
+        {t.phone && <h3 className="heading03B max-[1079px]:mb-1">{t.phone}</h3>}
+        {t.hours && <p className="body02R">{t.hours}</p>}
         <p className="body02R">{t.copyright}</p>
       </div>
     </footer>

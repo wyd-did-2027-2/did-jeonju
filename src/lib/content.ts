@@ -27,10 +27,10 @@ export const content = {
     footer: {
       logoAlt: "wyd did 전주 로고",
       address:
-        "전북특별자치도 전주시 완산구 기린대로 100 WYD 전주 교구대회 사무국",
-      email: "qna.wyd.doc.icn@gmail.com",
-      phone: "032-765-6997",
-      hours: "운영시간: 10:00 ~ 18:00",
+        "전북특별자치도 전주시 완산구 기린대로 100",
+      email: "wydjj2027@gmail.com",
+      phone: "",
+      hours: "",
       copyright: "Copyright ⓒ 전주교구 All rights reserved",
     },
     slider: {
@@ -85,10 +85,10 @@ export const content = {
     footer: {
       logoAlt: "wyd did Jeonju logo",
       address:
-        "100, Girin-daero, Wansan-gu, Jeonju-si, Jeonbuk-do, WYD Jeonju Diocesan Committee",
-      email: "qna.wyd.doc.icn@gmail.com",
-      phone: "032-765-6997",
-      hours: "Hours: 10:00 ~ 18:00",
+        "100, Girin-daero, Wansan-gu, Jeonju-si, Jeonbuk-do",
+      email: "wydjj2027@gmail.com",
+      phone: "",
+      hours: "",
       copyright: "Copyright ⓒ Diocese of Jeonju All rights reserved",
     },
     slider: {
