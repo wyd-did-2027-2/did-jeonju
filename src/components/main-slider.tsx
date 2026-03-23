@@ -144,7 +144,7 @@ export default function MainSlider({ locale = "kr" }: { locale?: Locale }) {
     >
       <div className="flicking-camera">
         <Panel>
-          <SliderItem00 />
+          <SliderItem00 locale={locale} />
         </Panel>
         {/* <Panel>
           <SliderItem03 />
@@ -153,10 +153,10 @@ export default function MainSlider({ locale = "kr" }: { locale?: Locale }) {
           <SliderItem02 />
         </Panel> */}
         <Panel>
-          <SliderItem01 />
+          <SliderItem01 locale={locale} />
         </Panel>
         <Panel>
-          <SliderItem04 />
+          <SliderItem04 locale={locale} />
         </Panel>
       </div>
       <div
@@ -177,16 +177,16 @@ export default function MainSlider({ locale = "kr" }: { locale?: Locale }) {
             <Pause
               width={40}
               height={40}
-              fill={[0, 2].includes(currentIndex) ? "#000" : "#fff"}
-              stroke={[0, 2].includes(currentIndex) ? "#000" : "#fff"}
+              fill={[1].includes(currentIndex) ? "#000" : "#fff"}
+              stroke={[1].includes(currentIndex) ? "#000" : "#fff"}
               strokeWidth={1}
             />
           ) : (
             <Play
               width={40}
               height={40}
-              fill={[0, 2].includes(currentIndex) ? "#000" : "#fff"}
-              stroke={[0, 2].includes(currentIndex) ? "#000" : "#fff"}
+              fill={[1].includes(currentIndex) ? "#000" : "#fff"}
+              stroke={[1].includes(currentIndex) ? "#000" : "#fff"}
               strokeWidth={1}
             />
           )}
@@ -201,13 +201,13 @@ export default function MainSlider({ locale = "kr" }: { locale?: Locale }) {
           <ChevronLeft
             width={48}
             height={48}
-            stroke={[0, 2].includes(currentIndex) ? "#000" : "#fff"}
+            stroke={[1].includes(currentIndex) ? "#000" : "#fff"}
           />
         </button>
         <div
           className={cn(
             "flicking-pagination relative! bottom-0! w-30!",
-            [0, 2].includes(currentIndex) && "[&_span]:text-black!",
+            [1].includes(currentIndex) && "[&_span]:text-black!",
           )}
         />
         <button
@@ -220,7 +220,7 @@ export default function MainSlider({ locale = "kr" }: { locale?: Locale }) {
           <ChevronRight
             width={48}
             height={48}
-            stroke={[0, 2].includes(currentIndex) ? "#000" : "#fff"}
+            stroke={[1].includes(currentIndex) ? "#000" : "#fff"}
           />
         </button>
       </div>
