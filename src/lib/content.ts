@@ -20,7 +20,7 @@ export const content = {
       ogLocale: "ko_KR",
     },
     header: {
-      logoAlt: "wyd did 전주 로고",
+      logoAlt: "wyd did 전주",
       nav: {
         home: "홈",
         calendar: "캘린더",
@@ -31,7 +31,7 @@ export const content = {
       },
     },
     footer: {
-      logoAlt: "wyd did 전주 로고",
+      logoAlt: "wyd did 전주",
       address:
         "전북특별자치도 전주시 완산구 기린대로 100",
       email: "wydjj2027@gmail.com",
@@ -78,7 +78,7 @@ export const content = {
       ogLocale: "en_US",
     },
     header: {
-      logoAlt: "wyd did Jeonju logo",
+      logoAlt: "wyd did Jeonju",
       nav: {
         home: "Home",
         calendar: "Calendar",
@@ -89,7 +89,7 @@ export const content = {
       },
     },
     footer: {
-      logoAlt: "wyd did Jeonju logo",
+      logoAlt: "wyd did Jeonju",
       address:
         "100, Girin-daero, Wansan-gu, Jeonju-si, Jeonbuk-do",
       email: "wydjj2027@gmail.com",
